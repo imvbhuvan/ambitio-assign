@@ -1,0 +1,11 @@
+student_id,supervisor_id,institution,area,sent_at,outcome,tier,score,score_topic_sim,score_recency,score_evidence,score_seniority
+stu_2026_anika_rao,A5012345001,Yale University,PTSD neuroimaging,2026-01-10,POSITIVE_REPLY,reach,0.82,0.91,0.80,1.00,0.70
+stu_2026_anika_rao,A5012345002,Stanford University,computational psychiatry,2026-01-10,INTERVIEW,reach,0.79,0.88,0.75,1.00,0.65
+stu_2026_anika_rao,A5012345003,UCL,PTSD neuroimaging,2026-01-11,ADMIT,target,0.74,0.80,0.70,0.60,0.80
+stu_2026_anika_rao,A5012345004,University of Melbourne,affective computing,2026-01-11,NO_REPLY,safety,0.61,0.62,0.55,0.60,0.55
+stu_2026_anika_rao,A5012345005,Imperial College London,computational psychiatry,2026-01-12,REJECT,target,0.58,0.60,0.50,0.40,0.60
+stu_2026_anika_rao,A5012345006,Unknown Lab,affective computing,2026-01-12,BOUNCE,safety,0.55,0.57,0.40,0.40,0.50
+stu_2026_anika_rao,A5012345007,Some University,PTSD neuroimaging,2026-01-13,WRONG_PERSON,target,0.66,0.70,0.60,0.60,0.55
+stu_2026_anika_rao,A5012345008,Busy Lab,computational psychiatry,2026-01-13,NOT_RECRUITING,reach,0.77,0.85,0.72,1.00,0.62
+stu_2026_anika_rao,A5012345009,Harvard University,PTSD neuroimaging,2026-01-14,POSITIVE_REPLY,reach,0.81,0.90,0.78,1.00,0.68
+stu_2026_anika_rao,A5012345010,University of Sydney,affective computing,2026-01-14,NO_REPLY,safety,0.59,0.60,0.52,0.40,0.58

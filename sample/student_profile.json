@@ -1,0 +1,23 @@
+{
+  "student_id": "stu_2026_anika_rao",
+  "name": "Anika Rao",
+  "nationality": "Indian",
+  "degrees": [
+    "B.Tech in Computer Science, Indian Institute of Technology (IIT) Hyderabad, 2022",
+    "MSc in Cognitive Neuroscience, University of Edinburgh, 2024"
+  ],
+  "target_intake": "Fall 2027",
+  "target_countries_freeform": "United States, United Kingdom, and Australia",
+  "stated_interests": [
+    "Neuroimaging biomarkers of PTSD and trauma using fMRI and DWI",
+    "Computational psychiatry: reinforcement-learning models of decision-making in mood and anxiety disorders",
+    "Affective computing: multimodal detection of emotional state from speech and physiology"
+  ],
+  "resume_text": "Anika Rao. MSc Cognitive Neuroscience (Edinburgh, distinction); B.Tech CS (IIT Hyderabad). Research assistant in the Edinburgh Clinical Brain Sciences lab (2023-2024): preprocessed 3T fMRI data for a PTSD cohort, built nipype pipelines, fit hierarchical Bayesian RL models in PyMC. Summer intern, affective-computing startup (2021): trained CNN-LSTM models on RAVDESS speech-emotion data and wearable PPG signals. Skills: Python, PyTorch, FSL, FreeSurfer, nilearn, hierarchical Bayesian modeling, signal processing. Languages: English, Hindi, Telugu.",
+  "intro_call_summary": "Anika wants a PhD bridging clinical neuroscience and machine learning. Strongest pull is toward computational models of trauma and anxiety, ideally combining task-based fMRI with RL/Bayesian modeling. Open to a more applied affective-computing lab as a backup. Needs full funding; will require a student visa. Prefers groups that actively publish clinical-population work, not purely methodological imaging groups. Wants supervisors who take international students.",
+  "notable_outputs": [
+    "Rao, A. et al. (2024). 'Hierarchical Bayesian reinforcement-learning accounts of avoidance in trauma-exposed adults.' MSc thesis, University of Edinburgh.",
+    "Co-authored poster, OHBM 2024: 'Amygdala-prefrontal connectivity and PTSD symptom severity in a 3T resting-state cohort.'",
+    "Open-source: 'rl-avoidance', a PyMC package for fitting avoidance-learning models (GitHub, 40 stars)."
+  ]
+}
