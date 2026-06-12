@@ -1,6 +1,6 @@
 # PhD Shortlist Builder
 
-Ingests a student profile and produces a ranked shortlist of 50–200 PhD supervisor
+Ingests a student profile JSON and produces a ranked shortlist of 50–200 PhD supervisor
 recommendations, each with paper/grant evidence and a personalized, grounded
 `why_match` blurb. Built as a precision-first contamination funnel: cheap deterministic
 filters eliminate ~80% of bad candidates before any LLM call, and a skeptical
@@ -12,39 +12,107 @@ Contamination (wrong-person / wrong-domain / non-PI) is weighted **heavier than
 coverage**. When uncertain, the pipeline drops the candidate. Country adherence is a
 hard constraint — a violation crashes the run rather than emitting it.
 
-## Quick start
+---
+
+## How to run (3 steps)
+
+### Step 1 — Install
+
+Requires **Python 3.11+**.
 
 ```bash
-# 1. Python 3.11+ and a virtual environment
-python -m venv .venv && .venv\Scripts\activate      # Windows
-# source .venv/bin/activate                          # macOS/Linux
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # macOS/Linux
+
 pip install -r requirements.txt
+```
 
-# 2. Configure secrets
-copy .env.example .env        # Windows  (cp on *nix)
-#   OPENAI_API_KEY  = your OpenAI API key
-#   OPENALEX_MAILTO = any valid email (OpenAlex polite pool)
+### Step 2 — Set up the `.env` file
 
-# 3. Run end-to-end
+Copy the template and fill in the two required values:
+
+```bash
+copy .env.example .env          # Windows  (cp .env.example .env on macOS/Linux)
+```
+
+| Variable | What to put there | Where to get it |
+|---|---|---|
+| `OPENAI_API_KEY` | Your OpenAI API key (`sk-...`) | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| `OPENALEX_MAILTO` | Any email address you control | No signup needed — OpenAlex's free "polite pool" just asks that requests identify a contact email |
+
+Example `.env`:
+
+```env
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxx
+OPENALEX_MAILTO=you@example.com
+```
+
+That's all that's required. Optional overrides (models, rate limits, thresholds) are
+documented in `.env.example` and default sensibly from `src/config.py`.
+
+### Step 3 — Run
+
+```bash
 python run.py --profile sample/student_profile.json
 ```
 
-Output lands at `sample_output/{student_id}.json`. A run-summary table (per-layer
-drop counts, per-area counts, wall-clock) prints to stdout. See `schema.md` for the
-output format.
+- Takes **~4 minutes** on a cold cache (OpenAlex responses are disk-cached, so reruns
+  are much faster).
+- The shortlist is written to **`sample_output/{student_id}.json`** — see `schema.md`
+  for the field-by-field output format. A committed example output from a real run is
+  already in `sample_output/`.
+- A run-summary table prints to stdout: total recommendations, per-area counts,
+  reach/target/safety tier split, and per-layer funnel drop counts (how many candidates
+  each filter eliminated, per research area).
 
-### Options
+### CLI options
 
 ```
 python run.py --profile <path> [--output <dir>] [--no-cache]
-python run.py ingest-feedback --csv outcomes.csv     # feedback loop (bonus)
+python run.py ingest-feedback --csv sample/outcomes.csv     # feedback loop (bonus)
 ```
 
-- `--no-cache` bypasses the OpenAlex disk cache (`.cache/openalex/`).
+- `--output` — write the shortlist to a different directory.
+- `--no-cache` — bypass the OpenAlex disk cache (`.cache/openalex/`).
 - With a warm cache, reruns are fast and the **candidate set + ranks are stable**.
-  (LLM-written `why_match` *text* may vary slightly between runs since structured
-  generation is non-deterministic in wording; the candidate IDs, scores, and ranks
-  are deterministic given the cached API responses.)
+  (LLM-written `why_match` *text* may vary slightly between runs since generation is
+  non-deterministic in wording; candidate IDs, scores, and ranks are deterministic
+  given the cached API responses.)
+
+---
+
+## The input: student profile JSON
+
+A ready-to-run sample is provided at **`sample/student_profile.json`** — a synthetic
+but realistic applicant (Indian student, MSc Cognitive Neuroscience from Edinburgh,
+three research interests spanning PTSD neuroimaging / computational psychiatry /
+affective computing, targeting the US, UK, and Australia for Fall 2027).
+
+To test with your own student, create a JSON file with these fields:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `student_id` | string | yes | Any unique ID — names the output file |
+| `degrees` | list[string] | yes | Degrees with institution and year |
+| `stated_interests` | list[string] | yes | Research interests in the student's own words — the parser LLM normalizes these into 3–5 search-ready research areas |
+| `target_countries_freeform` | string | yes | Countries in plain English (e.g. `"US, UK and Australia"`) — mapped to ISO codes by the parser |
+| `target_intake` | string | yes | e.g. `"Fall 2027"` |
+| `nationality` | string | no | Used for eligibility context |
+| `resume_text` | string | no | Raw resume text — improves keyword expansion and `why_match` specificity |
+| `intro_call_summary` | string | no | Free-text notes from a counselor call — preferences, constraints, funding needs |
+| `notable_outputs` | list[string] | no | Publications/posters/projects worth citing in cold emails |
+
+The input is deliberately tolerant of mess: the first pipeline stage is an LLM parser
+that converts whatever combination of these fields is present into a structured
+`ProfileSpec` (see `src/schemas.py`). Field names don't need to match exactly — extra
+fields are passed through to the parser as context.
+
+```bash
+python run.py --profile path/to/your_student.json
+```
+
+---
 
 ## Data sources
 
@@ -75,8 +143,8 @@ Each `area_worker` runs the precision-first funnel, logging drop counts per laye
 3. **Career stage** — require last-author share ≥ 0.40, ≥ 6 years active, ≥ 15 works,
    and an allowed institution type; exclude personal-fellowship works (F31/F32/MSCA-PF)
    as supervision evidence. Filters out students/postdocs/industry.
-4. **Identity gate** — cosine(area embedding, author topic centroid) ≥ 0.55. Drops
-   off-topic same-name authors.
+4. **Identity gate** — cosine(area embedding, author topic centroid) above a
+   configured floor. Drops off-topic same-name authors.
 5. **Blacklist join** — drop IDs the feedback store marks WRONG_PERSON/BOUNCE or
    suppresses (NOT_RECRUITING within TTL).
 6. **LLM judge** — a skeptical GPT-5.4 Mini gatekeeper classifies discipline, region of
@@ -90,26 +158,3 @@ reach/target/safety tiers by institution citation tercile. `generate_why_match`
 produces grounded blurbs behind a guard (drops any blurb that cites evidence outside
 the candidate's set or fails to quote a title). `finalize` asserts country adherence,
 evidence presence, and minimum count before writing.
-
-## Known limitations
-
-- **No position-ad ingestion in v1.** Eligibility (citizenship/fee status) is
-  implemented as a tested hook (`src/filters/eligibility.py`) but not wired in — there
-  is no ad source yet. See `DECISIONS.md` §6.4.
-- **Contact coverage is limited** to what OpenAlex/ORCID surface. Emails are never
-  guessed; `contact` is usually null.
-- **Tiering is a simplification** — institution citation terciles within the shortlist,
-  not admissions selectivity. Defensible and transparent; noted in `DECISIONS.md`.
-- **Grant enrichment is shallow** in v1: grants come from the sourced works' `grants`
-  field, linked to the funded paper's DOI. No funder-site scraping.
-
-## Tests
-
-```bash
-pytest          # 28 tests, no live network — fixtures only
-```
-
-Covers the trap cases (fresh postdoc, F31 fellowship, foreign country, same-name
-collision), the grounding guard, the OpenAlex client (abstract reconstruction, 50-ID
-batching, cursor pagination), the eligibility extractor, the feedback store, and a full
-end-to-end smoke test with OpenAlex + the LLM stubbed to deterministic fakes.
